@@ -3,8 +3,6 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Scanner;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
 public class CurrencyConverter {
     private static final String API_KEY = "793fc6eae4b3cc62cd88a080";
@@ -60,12 +58,30 @@ public class CurrencyConverter {
             }
             in.close();
 
-            // Parse JSON response using GSON
-            JsonObject jsonResponse = JsonParser.parseString(response.toString()).getAsJsonObject();
-            return jsonResponse.get("conversion_rate").getAsDouble();
+            // Manually parse JSON to find "conversion_rate"
+            String jsonResponse = response.toString();
+            String conversionRateString = extractConversionRate(jsonResponse);
+
+            return conversionRateString != null ? Double.parseDouble(conversionRateString) : -1;
         } else {
             System.out.println("HTTP Error: " + responseCode);
             return -1;
         }
+    }
+
+    // Method to extract "conversion_rate" from JSON response
+    private static String extractConversionRate(String jsonResponse) {
+        // Locate the "conversion_rate" key and extract the value
+        String searchKey = "\"conversion_rate\":";
+        int startIndex = jsonResponse.indexOf(searchKey);
+        if (startIndex != -1) {
+            startIndex += searchKey.length();
+            int endIndex = jsonResponse.indexOf(",", startIndex);
+            if (endIndex == -1) {
+                endIndex = jsonResponse.indexOf("}", startIndex);
+            }
+            return jsonResponse.substring(startIndex, endIndex).trim();
+        }
+        return null;
     }
 }
